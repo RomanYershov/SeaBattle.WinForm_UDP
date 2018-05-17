@@ -24,8 +24,9 @@ namespace SeaBattle_Client
         private static List<Label> Field;
         private static List<Ship> Ships;
         private static List<string> MyCoordinates;
-        private string targetPos;
+        
         private Label targetLabel;
+        private int count;
 
 
 
@@ -90,37 +91,10 @@ namespace SeaBattle_Client
                 {
                     // Ожидание дейтаграммы
                     byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
-
-
                     // Преобразуем и отображаем данные
                     string returnData = Encoding.UTF8.GetString(receiveBytes);
-                    Action action;
-                    if (returnData == "yes")
-                    {
-                        targetLabel.BackColor = Color.Red;
-                        action = () =>
-                        {
-                            targetLabel.Text = "X";
 
-                        };
-                        Invoke(action);
-                    }
-                    else if (returnData == "no")
-                    {
-                        action = () =>
-                        {
-                            targetLabel.Text = "X";
-
-                        };
-                        Invoke(action);
-
-                    }
-
-                    //Field.FirstOrDefault(x => x.Tag.ToString() == returnData).Text = "X";
-
-                    else IsBingo(returnData);
-
-
+                    YesNoWon(returnData);
                 }
             }
             catch (Exception ex)
@@ -132,22 +106,20 @@ namespace SeaBattle_Client
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //Send(richTextBox1.Text);
-            //label1.Text += "\nyou: " + richTextBox1.Text + "\n";
-            //richTextBox1.Text = "";
+            Send("ready");
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             try
             {
-                localPort = Convert.ToInt16("11000");
+                localPort = Convert.ToInt16("10000");
 
 
-                remotePort = Convert.ToInt16("10000");
+                remotePort = Convert.ToInt16("11000");
 
 
-                remoteIPAddress = IPAddress.Parse("127.0.0.1");
+                remoteIPAddress = IPAddress.Parse("192.168.1.9");
 
                 Task task = new Task(Receiver);
                 task.Start();
@@ -166,7 +138,7 @@ namespace SeaBattle_Client
             Label selectedCell = ((Label)sender);
             if (selectedCell.Text == " ")
             {
-                selectedCell.BackColor = Color.Gainsboro;
+                selectedCell.BackColor = Color.AliceBlue;
                 selectedCell.Text = string.Empty;
                 MyCoordinates.Remove(selectedCell.Tag.ToString());
                 return;
@@ -177,7 +149,7 @@ namespace SeaBattle_Client
                 MessageBox.Show("Максимальное кол-во");
                 return;
             }
-            selectedCell.BackColor = Color.BlanchedAlmond;
+            selectedCell.BackColor = Color.LightSeaGreen;
             selectedCell.Text = " ";
 
             MyCoordinates.Add(selectedCell.Tag.ToString());
@@ -186,6 +158,8 @@ namespace SeaBattle_Client
 
         private void EnemyFieldCell_Click(object sender, EventArgs e)
         {
+           
+           
             targetLabel = ((Label)sender);
             string targetPos = targetLabel.Tag.ToString();
             //if (MyCoordinates.Contains(pos))
@@ -206,26 +180,58 @@ namespace SeaBattle_Client
         {
             targetLabel = Field.Where(x => x.Tag.ToString() == pos)
                       .FirstOrDefault();
-            if (MyCoordinates.Contains(pos))
+
+            Action action = () =>
             {
-                targetLabel.BackColor = Color.Gray;
-                Action action = () =>
-                {
-                    targetLabel.Text = "X";
-                };
-                Invoke(action);
+                targetLabel.Text = "X";
+            };
+            Invoke(action);
+            if (MyCoordinates.Contains(pos))
+            {               
+                targetLabel.BackColor = Color.Gray;               
                 MyCoordinates.Remove(pos);
+                if (count >= 16)
+                {
+                    Send("won");//TODO 
+                    count = 0;
+                    MessageBox.Show("You loose( ( (");
+                    //return;
+                }
+                count++;
                 Send("yes");
             }
             else
-            {
-                Action action = () =>
-                {
-                    targetLabel.Text = "X";
-                };
-                Invoke(action);
+            {               
                 Send("no");
             }
+        }
+
+        private void YesNoWon(string returnData)
+        {
+            Action action = () =>
+            {
+                targetLabel.Text = "X";
+            };
+            if(returnData == "ready")
+            {
+                MessageBox.Show("противник готов к бою");
+            }
+            else if (returnData == "yes")
+            {
+                targetLabel.BackColor = Color.Red;
+                Invoke(action);
+            }
+            else if (returnData == "no")
+            {
+                Invoke(action);
+            }
+            else if (returnData == "won")
+            {
+                targetLabel.BackColor = Color.Red;
+                Invoke(action);
+                MessageBox.Show("You woN!!!");
+            }
+            else IsBingo(returnData);
         }
 
 
