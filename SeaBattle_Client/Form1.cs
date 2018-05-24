@@ -113,13 +113,13 @@ namespace SeaBattle_Client
         {
             try
             {
-                localPort = Convert.ToInt16("10000");
+                localPort = Convert.ToInt16("11000");
 
 
-                remotePort = Convert.ToInt16("11000");
+                remotePort = Convert.ToInt16("10000");
 
 
-                remoteIPAddress = IPAddress.Parse("192.168.1.9");
+                remoteIPAddress = IPAddress.Parse("127.0.0.1");
 
                 Task task = new Task(Receiver);
                 task.Start();
